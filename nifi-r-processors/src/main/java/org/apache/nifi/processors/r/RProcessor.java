@@ -200,8 +200,8 @@ public class RProcessor extends AbstractSessionFactoryProcessor {
                 rEngine.assign("session", new REXPJavaReference(session));
                 rEngine.assign("context", new REXPJavaReference(processContext));
                 rEngine.assign("log", new REXPJavaReference(log));
-                rEngine.assign("REL_SUCCESS", String.valueOf(REL_SUCCESS));
-                rEngine.assign("REL_FAILURE", String.valueOf(REL_FAILURE));
+                rEngine.assign("REL_SUCCESS", new REXPJavaReference(REL_SUCCESS));
+                rEngine.assign("REL_FAILURE", new REXPJavaReference(REL_FAILURE));
 
                 rEngine.parseAndEval(scriptToRun);
 
