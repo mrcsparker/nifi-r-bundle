@@ -22,6 +22,7 @@ import org.apache.nifi.annotation.lifecycle.OnScheduled;
 import org.apache.nifi.annotation.lifecycle.OnStopped;
 import org.apache.nifi.components.PropertyDescriptor;
 import org.apache.nifi.components.Validator;
+import org.apache.nifi.flowfile.FlowFile;
 import org.apache.nifi.logging.ComponentLog;
 import org.apache.nifi.processor.*;
 import org.apache.nifi.processor.exception.ProcessException;
@@ -33,6 +34,7 @@ import org.rosuda.REngine.REngineStdOutput;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -180,8 +182,12 @@ public class RProcessor extends AbstractSessionFactoryProcessor {
     }
 
     protected REngine setupScriptingContainer(final ProcessContext context) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        String[] args = {"--vanilla"};
-        REngine rEngine = REngine.engineForClass("org.rosuda.REngine.JRI.JRIEngine", args, new REngineStdOutput(), false);
+        REngine rEngine = REngine.getLastEngine();
+
+        if (REngine.getLastEngine() == null) {
+            String[] args = {"--vanilla"};
+            rEngine = REngine.engineForClass("org.rosuda.REngine.JRI.JRIEngine", args, new REngineStdOutput(), false);
+        }
 
         return rEngine;
     }
@@ -196,14 +202,14 @@ public class RProcessor extends AbstractSessionFactoryProcessor {
         try {
             try {
 
-                rEngine.parseAndEval("{ library(rJava); .jinit() }");
-                rEngine.assign("session", new REXPJavaReference(session));
-                rEngine.assign("context", new REXPJavaReference(processContext));
-                rEngine.assign("log", new REXPJavaReference(log));
-                rEngine.assign("REL_SUCCESS", new REXPJavaReference(REL_SUCCESS));
-                rEngine.assign("REL_FAILURE", new REXPJavaReference(REL_FAILURE));
 
-                rEngine.parseAndEval(scriptToRun);
+                rEngine.parseAndEval("{ library(rJava); .jinit() }");
+                RStreamCallback rStreamCallback = new RStreamCallback(rEngine, log, scriptToRun);
+
+                FlowFile flowfile = session.get();
+                flowfile = session.write(flowfile, rStreamCallback);
+
+                session.transfer(flowfile, REL_SUCCESS);
 
                 session.commit();
             } catch (Exception e) {
