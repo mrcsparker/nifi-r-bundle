@@ -1,6 +1,5 @@
 package org.apache.nifi.processors.r;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.nifi.logging.ComponentLog;
 import org.apache.nifi.processor.io.StreamCallback;
 import org.rosuda.REngine.*;

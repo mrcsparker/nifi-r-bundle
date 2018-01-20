@@ -27,14 +27,11 @@ import org.apache.nifi.logging.ComponentLog;
 import org.apache.nifi.processor.*;
 import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.nifi.processor.util.StandardValidators;
-import org.rosuda.REngine.REXP;
-import org.rosuda.REngine.REXPJavaReference;
 import org.rosuda.REngine.REngine;
 import org.rosuda.REngine.REngineStdOutput;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -121,6 +118,7 @@ public class RProcessor extends AbstractSessionFactoryProcessor {
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
         }
+        assert fieldSysPath != null;
         fieldSysPath.setAccessible(true);
         try {
             fieldSysPath.set(null, null);
@@ -136,7 +134,7 @@ public class RProcessor extends AbstractSessionFactoryProcessor {
         try {
             if (scriptToRun == null && scriptFile != null) {
                 try (final FileInputStream scriptStream = new FileInputStream(scriptFile)) {
-                    scriptToRun = IOUtils.toString(scriptStream);
+                    scriptToRun = IOUtils.toString(scriptStream, "UTF-8");
                 }
             }
         } catch (IOException ioe) {
